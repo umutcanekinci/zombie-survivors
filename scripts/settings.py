@@ -58,7 +58,7 @@ SERVER_PREFIX = f"{Fore.CYAN}[SERVER] {Fore.RED}=> {Fore.YELLOW}"
 #region #-# Game Settings #-#
 
 #-# Window #-#
-WINDOW_TITLE = "CHOOSE YOUR WAY"
+WINDOW_TITLE = "ZOMIE SURVIVORS"
 WINDOW_SIZE = WINDIW_WIDTH, WINDOW_HEIGHT = 1920, 1080
 WINDOW_RECT = pygame.Rect((0, 0), WINDOW_SIZE)
 
@@ -111,13 +111,13 @@ GUI_LAYER = 5
 #region #-# Socket Settings#-#
 
 #-# Client #-#
-CLIENT_IP = socket.gethostbyname(socket.gethostname()) #"localhost" #"5.tcp.eu.ngrok.io"
-CLIENT_PORT = 5050
+CLIENT_IP = "192.168.1.21" # This is the IP address of the server that the client will connect to.
+CLIENT_PORT = 4848
 CLIENT_ADDR = (CLIENT_IP, CLIENT_PORT)
 
 #-# Server #-#
-SERVER_IP = socket.gethostbyname(socket.gethostname()) #localhost
-SERVER_PORT = 5050
+SERVER_IP = socket.gethostbyname(socket.gethostname()) # This is the IP address of this device that the server will run on.
+SERVER_PORT = 4848
 SERVER_ADDR = (SERVER_IP, SERVER_PORT)
 
 SERVER_TITLE = WINDOW_TITLE + " SERVER"
