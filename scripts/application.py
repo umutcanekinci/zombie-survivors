@@ -3,7 +3,7 @@ from path import *
 import sys, os
 from pygame import mixer
 from object import Object
-from text import Text
+from gui.text import Text
 
 
 class Application:
@@ -134,7 +134,6 @@ class Application:
             #-# Draw Objects #-#
             self.Draw()
     
-
     def HandleEvents(self, event: pygame.event.Event) -> None:
         
         self.HandleExitEvents(event)

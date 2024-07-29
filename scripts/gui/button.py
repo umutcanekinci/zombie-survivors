@@ -1,16 +1,16 @@
 from settings import *
 from object import Object
 from path import ImagePath
-from text import Text
+from gui.text import Text
 from path import *
 
 class Button(Object):
 
-	def __init__(self, position: tuple=("CENTER", "CENTER"), size: tuple=(0, 0), color: tuple = Blue, mouseOverColor: tuple = Red, imagePath: ImagePath=None, spriteGroups: list=[], parentRect: pygame.Rect=None, text: str="", textSize: int=20, textColor: tuple=White, textFontPath: pygame.font.Font=None, isActive=True):
+	def __init__(self, position: tuple=("CENTER", "CENTER"), size: tuple=(0, 0), color: tuple = Blue, mouseOverColor: tuple = Red, imagePath: ImagePath=None, spriteGroups: list=[], parentRect: pygame.Rect=None, text: str="", textSize: int=20, textColor: tuple=White, textFontPath: pygame.font.Font=None, isActive=True, clickEvent=None):
 
 		super().__init__(position, size, imagePath, spriteGroups, parentRect)
 		self._layer = GUI_LAYER
-
+		self.clickEvent = clickEvent
 		self.normalColor, self.mouseOverColor = color, mouseOverColor
 		self.color = self.normalColor
 
@@ -49,6 +49,10 @@ class Button(Object):
 		
 		self.Rerender()
 
+		if self.isMouseClick(event, mousePosition) and self.clickEvent:
+			
+			self.clickEvent()
+
 	def UpdateColor(self, mousePosition):
 
 		if self.active:
@@ -76,10 +80,10 @@ class Button(Object):
 
 class EllipseButton(Button):
 
-	def __init__(self, position: tuple = ("CENTER", "CENTER"), size: tuple = (0, 0), color: tuple = Blue, mouseOverColor: tuple = Red, imagePath: ImagePath = None, spriteGroups: list = [], parentRect: pygame.Rect = None, text: str = "", textSize: int = 20, textColor: tuple = White, textFontPath: pygame.font.Font = None, isActive=True):
+	def __init__(self, position: tuple = ("CENTER", "CENTER"), size: tuple = (0, 0), color: tuple = Blue, mouseOverColor: tuple = Red, imagePath: ImagePath = None, spriteGroups: list = [], parentRect: pygame.Rect = None, text: str = "", textSize: int = 20, textColor: tuple = White, textFontPath: pygame.font.Font = None, isActive=True, clickEvent=None):
 		
 		self.stayDown = False
-		super().__init__(position, size, color, mouseOverColor, imagePath, spriteGroups, parentRect, text, textSize, textColor, textFontPath, isActive)
+		super().__init__(position, size, color, mouseOverColor, imagePath, spriteGroups, parentRect, text, textSize, textColor, textFontPath, isActive, clickEvent)
 
 	def SetText(self, text: str, textSize: int, antialias: bool, color: tuple, backgroundColor, fontPath: pygame.font.Font = None) -> None:
 		
@@ -141,10 +145,13 @@ class EllipseButton(Button):
 
 			self.stayDown = False
 
-		
 		self.UpdateColor(mousePosition)
 
 		self.Rerender()
+
+		if self.isMouseClick(event, mousePosition) and self.clickEvent:
+			
+			self.clickEvent()
 
 class TriangleButton(Button):
 

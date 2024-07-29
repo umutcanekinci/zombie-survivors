@@ -1,6 +1,6 @@
 from settings import *
 from object import Object, GetImage
-from text import Text
+from gui.text import Text
 from map import Collide
 
 class Entity(Object):

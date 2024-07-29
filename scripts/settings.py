@@ -111,7 +111,7 @@ GUI_LAYER = 5
 #region #-# Socket Settings#-#
 
 #-# Client #-#
-CLIENT_IP = "192.168.1.21" # This is the IP address of the server that the client will connect to.
+CLIENT_IP = socket.gethostbyname(socket.gethostname())#"192.168.1.21" # This is the IP address of the server that the client will connect to.
 CLIENT_PORT = 4848
 CLIENT_ADDR = (CLIENT_IP, CLIENT_PORT)
 

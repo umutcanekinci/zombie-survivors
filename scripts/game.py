@@ -5,7 +5,7 @@ from path import *
 from client import Client
 from application import Application
 
-from menu import Menu
+from gui.menu import Menu
 from map import Map
 from camera import Camera
 from player import Players
@@ -64,9 +64,7 @@ class Game(Application):
 
 	def JoinRoom(self, roomID):
 
-		if self.mode == "online":
-
-			self.client.SendData("!JOIN_ROOM", roomID)
+		self.client.SendData("!JOIN_ROOM", roomID)
 
 	def Start(self):
 		

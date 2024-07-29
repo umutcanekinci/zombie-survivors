@@ -2,7 +2,7 @@ from pygame import Rect
 from object import Object, GetImage
 from path import ImagePath
 from settings import *
-from text import Text
+from scripts.gui.text import Text
 
 class Base(Object):
 
