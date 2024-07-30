@@ -3,7 +3,7 @@ from gui.menu import Menu
 from gui.text import Text
 from settings import *
 from gui.button import Button
-from functions import Centerize
+from functions import Centerize, isMouseButtonDown, isMouseButtonUp, isClicked
 
 import pygame
 
@@ -18,37 +18,72 @@ class Game(Application):
     def InitGUI(self) -> None:
         
         self.menu = Menu()
+        self.menu.rect = self.rect
+        
         self.menu.AddTab('main')
         self.menu.AddTab('player')
+        self.menu.AddTab('upgrades')
+        self.menu.AddTab('achievments')
+        self.menu.AddTab('settings')
+        self.menu.AddTab('credits')
+        
         self.menu.AddTab('mode')
         self.menu.AddTab('connect')
         self.menu.AddTab('lobby')
         self.menu.AddTab('join')
         self.menu.AddTab('game')
+
         self.menu.SetTab('main')
         
+        #-# Main Menu #-#
+        image = pygame.Surface((400, 80))
+        mouseOverImage = image.copy()
+        clickImage = image.copy()
+        passiveImage = image.copy()
+        passiveMouseOverImage = image.copy()
+        passiveClickImage = image.copy()
+
+        image.fill(colors.get('blue'))
+        mouseOverImage.fill(colors.get('red'))
+        clickImage.fill(colors.get('green'))
+        passiveImage.fill(colors.get('gray'))
+        passiveMouseOverImage.fill(colors.get('black'))
+        passiveClickImage.fill(colors.get('black'))
+
+        text = Text((0, 0), 'New Game')
+        mouseOverText = Text((0, 0), 'New Game', color=colors.get('black'))
+        passiveText = Text((0, 0), '', color=colors.get('black'))
+
+        button = Button((0, 150), lambda: self.menu.SetTab('player'))
+        button.SetImages(image, mouseOverImage, clickImage)
+        button.SetPassiveImages(passiveImage, passiveMouseOverImage, passiveClickImage)
+
         
-        self.menu.AddButton('main', Button((0, 150), image=pygame.Surface((400, 80)), onClick= lambda: self.menu.SetTab('player'), text=Text((0, 0), 'New Game', 25, True, White), mouseOverText=Text((0, 0), 'Main Menu', 25, True, Black), passiveText=Text((0, 0), 'Main Menu', 25, True, Black)))
-        self.menu.AddButton('main', Button((0, 300), image=pygame.Surface((400, 80)), onClick= lambda: self.menu.SetTab('player'), text=Text((0, 0), 'Continue', 25, True, White), mouseOverText=Text((0, 0), 'Main Menu', 25, True, Black), passiveText=Text((0, 0), 'Main Menu', 25, True, Black)))
-        self.menu.AddButton('main', Button((0, 450), image=pygame.Surface((400, 80)), onClick= lambda: self.menu.SetTab('player'), text=Text((0, 0), 'Upgrades', 25, True, White), mouseOverText=Text((0, 0), 'Main Menu', 25, True, Black), passiveText=Text((0, 0), 'Main Menu', 25, True, Black)))
-        self.menu.AddButton('main', Button((0, 600), image=pygame.Surface((400, 80)), onClick= lambda: self.menu.SetTab('player'), text=Text((0, 0), 'Achievments', 25, True, White), mouseOverText=Text((0, 0), 'Main Menu', 25, True, Black), passiveText=Text((0, 0), 'Main Menu', 25, True, Black)))
-        self.menu.AddButton('main', Button((0, 750), image=pygame.Surface((400, 80)), onClick= lambda: self.menu.SetTab('player'), text=Text((0, 0), 'Settings', 25, True, White), mouseOverText=Text((0, 0), 'Main Menu', 25, True, Black), passiveText=Text((0, 0), 'Main Menu', 25, True, Black)))
-        self.menu.AddButton('main', Button((0, 900), image=pygame.Surface((400, 80)), onClick= lambda: self.menu.SetTab('player'), text=Text((0, 0), 'Credits', 25, True, White), mouseOverText=Text((0, 0), 'Main Menu', 25, True, Black), passiveText=Text((0, 0), 'Main Menu', 25, True, Black)))
-        self.menu.AddButton('main', Button((0, 900), image=pygame.Surface((400, 80)), onClick= self.Exit, text=Text((0, 0), 'Exit', 25, True, White), mouseOverText=Text((0, 0), 'Main Menu', 25, True, Black), passiveText=Text((0, 0), 'Main Menu', 25, True, Black)))
-        for button in self.menu.buttons['main']:
-            
-            Centerize(button, self, y=False)
+        button.SetText(text, mouseOverText, passiveText)
+
+        self.menu.AddButton('main', button)
+
+    def NewGame(self) -> None:
+        
+        pass
+
+    def ContinueGame(self) -> None:
+        
+        pass
 
     def HandleEvents(self, event: pygame.event.Event) -> None:
         
         self.menu.HandleEvents(self.mouseDownPosition, self.mousePosition, event)
         super().HandleEvents(event)
 
-        self.DebugLog(4, f'Event: {event}')
-
+        self.DebugLog(4, f'Event Name: {pygame.event.event_name(event.type)}')
+        self.DebugLog(5, f'Event Position: {event.dict.get("pos")}')
+        self.DebugLog(6, f'---------------------------------------')
+        self.DebugLog(7, f'Mouse Position: {self.mousePosition}')
+        self.DebugLog(8, f'Mouse Down Position: {self.mouseDownPosition}')
     def Draw(self) -> None:
 
-        self.window.fill((0, 0, 0))
+        self.window.fill(BACKGROUND_COLOR)
 
         if self.menu.tab == 'game':
 

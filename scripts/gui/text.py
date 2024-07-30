@@ -4,7 +4,7 @@ import pygame
 
 class Text(Object):
 
-	def __init__(self, position, text='', textSize=25, antialias=True, color=White, backgroundColor=None, fontPath = None, spriteGroups: list=[]) -> None:
+	def __init__(self, position, text='', textSize=25, antialias=True, color=colors.get('white'), backgroundColor=None, fontPath = None, spriteGroups: list=[]) -> None:
 
 		super().__init__(position, spriteGroups)
 		

@@ -1,72 +1,82 @@
 import pygame
 from object import Object
 from functions import isClicked, isMouseOver, Centerize
-from settings import White, Blue, Yellow, PASSIVE_BUTTON_COLOR
+from settings import colors, PASSIVE_BUTTON_COLOR
 from gui.text import Text
 from path import FontPath
 
 class Button(Object):
 
-	def __init__(self, position: tuple = (0, 0), color= Blue, mouseOverColor: tuple = Yellow, image: pygame.Surface = None, spriteGroups: list = [], onClick = None, state = 'active', text: Text=None, mouseOverText: Text=None, passiveText: Text=None) -> None:
+	def __init__(self, position: tuple = (0, 0), onClick = None, state = 'active', spriteGroups: list = []) -> None:
 
 		super().__init__(position, spriteGroups)
-
-		# Set the images of the button
-		self.SetImage(image)
-		self.mouseOverImage = self.image.copy()
-		self.passiveImage = self.image.copy()
-		
-		# Set the color of the button
-		self.SetColor(color)
-		self.SetMouseOverColor(mouseOverColor)
-		self.SetPassiveColor(PASSIVE_BUTTON_COLOR)
-
-		# Set the text of the button
-	
-		if text:
-			
-			Centerize(text, self)
-			text.Draw(self.image)
-			
-		if mouseOverText:
-			
-			Centerize(mouseOverText, self)
-			mouseOverText.Draw(self.mouseOverImage)
-		
-		if passiveText:
-			
-			Centerize(passiveText, self)
-			passiveText.Draw(self.passiveImage)
 
 		self.state = state
 		self.onClick = onClick
 
-	def SetColor(self, color: tuple) -> None:
+	def SetText(self, text: Text=None, mouseOverText: Text=None, passiveText: Text=None):
 
-		self.image.fill(color)
+		if text and self.image:
+			
+			Centerize(text.rect, self.rect)
+			text.Draw(self.image)
+			
+		if mouseOverText and self.mouseOverImage:
+			
+			Centerize(mouseOverText.rect, self.rect)
+			mouseOverText.Draw(self.mouseOverImage)
+		
+		if passiveText and self.passiveImage:
+			
+			Centerize(passiveText.rect, self.rect)
+			passiveText.Draw(self.passiveImage)
 
-	def SetMouseOverColor(self, color: tuple) -> None:
+	def SetImages(self, image: pygame.Surface = None, mouseOverImage: pygame.Surface= None, clickImage: pygame.Surface = None):
 
-		self.mouseOverImage.fill(color)
+		self.image = image
+		self.mouseOverImage = mouseOverImage
+		self.clickImage = clickImage
 
-	def SetPassiveColor(self, color: tuple) -> None:
+		self.rect = self.image.get_rect(center=self.rect.center)
 
-		self.passiveImage.fill(color)
+	def SetPassiveImages(self, image: pygame.Surface = None, mouseOverImage: pygame.Surface= None, clickImage: pygame.Surface = None):
+
+		self.passiveImage = image
+		self.passiveMouseOverImage = mouseOverImage
+		self.passiveClickImage = clickImage
+
+		self.rect = self.passiveImage.get_rect(center=self.rect.center)
 
 	def HandleEvents(self, mouseDownPosition, mousePosition, event: pygame.event.Event) -> None:
 		
-		if self.isMouseClick(mouseDownPosition, mousePosition, event):
+		if self.isClicked(mouseDownPosition, mousePosition, event): self.onClick()
 
-			print('clicked')
-			self.onClick()
+		#image
+		#mouseOverImage
+		#clickImage
+		#passiveImage
+		#passiveMouseOverImage
+		#passiveClickImage
 
-		if self.state != 'passive':
+		if 'passive' in self.state:
 
-			self.state = 'mouseOver' if isMouseOver(self, mousePosition) else 'active'
-		
-	def isMouseClick(self, mouseDownPosition, mousePosition, event: pygame.event.Event) -> bool:
+			if isMouseOver(self.rect, mousePosition): self.state = 'passiveMouseOver'
 
-		return isClicked(self, mouseDownPosition, mousePosition, event) and self.state != 'passive'
+			elif isClicked(self.rect, mouseDownPosition, mousePosition, event): self.state = 'passiveClick'
+
+			else: self.state = 'passive'
+
+		else:
+
+			if isMouseOver(self.rect, mousePosition): self.state = 'mouseOver'
+
+			elif isClicked(self.rect, mouseDownPosition, mousePosition, event): self.state = 'click'
+
+			else: self.state = 'active'
+
+	def isClicked(self, mouseDownPosition, mousePosition, event: pygame.event.Event) -> bool:
+			
+		return isClicked(self.rect, mouseDownPosition, mousePosition, event) and 'passive' not in self.state
 	
 	def Draw(self, surface: pygame.Surface) -> None:
 	
@@ -78,6 +88,34 @@ class Button(Object):
 
 			surface.blit(self.mouseOverImage, self.rect)
 
+		elif self.state == 'click':
+
+			surface.blit(self.clickImage, self.rect)
+
 		elif self.state == 'passive':
 
 			surface.blit(self.passiveImage, self.rect)
+
+		elif self.state == 'passiveMouseOver':
+
+			surface.blit(self.passiveMouseOverImage, self.rect)
+
+		elif self.state == 'passiveClick':
+
+			surface.blit(self.passiveClickImage, self.rect)
+
+class EllipseButton(Button):
+
+	def __init__(self, position: tuple = (0, 0), color=colors.get('blue'), mouseOverColor: tuple = colors.get('yellow'), image: pygame.Surface = None, spriteGroups: list = [], onClick=None, state='active', text: Text = None, mouseOverText: Text = None, passiveText: Text = None) -> None:
+		
+		super().__init__(position, color, mouseOverColor, image, spriteGroups, onClick, state, text, mouseOverText, passiveText)
+
+		backgroundImage = self.image.copy()
+
+		self.image
+		self.mouseOverImage
+		self.passiveImage
+
+		self.clickedImage = self.image.copy()
+		self.clickedMouseOverImage = self.mouseOverImage.copy()
+		self.clickedPassiveImage = self.passiveImage.copy()

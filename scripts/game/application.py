@@ -35,7 +35,7 @@ class Application:
 
 	def AddDebugLog(self, text: str) -> None:
 
-		self.debugModeLog.append(Text((0, 0), text, 25, True, Red))
+		self.debugModeLog.append(Text((0, 0), text, 25, True, colors.get('red')))
 		self.debugModeLog[-1].rect.topleft = (0, 25 * len(self.debugModeLog) - 25)
 
 	def DebugLog(self, row: int, text: str) -> None:
@@ -98,12 +98,12 @@ class Application:
 				if event.type == pygame.MOUSEBUTTONDOWN:
 
 					self.mouseDownPosition = self.mousePosition
-
-				elif event.type == pygame.MOUSEBUTTONUP:
-
-					self.mouseDownPosition = None
 					
 				self.HandleEvents(event)
+
+				if event.type == pygame.MOUSEBUTTONUP:
+
+					self.mouseDownPosition = None
 
 			self.Update()
 
@@ -155,10 +155,8 @@ class Application:
 
 """
 
-	DebugLog
 	FullScreen
 	CenterWindow
-	SetBackgorundColor
 	SetCursorVisible
 	SetCursorImage
 	PlaySound

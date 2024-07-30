@@ -1,14 +1,17 @@
 import pygame
 from gui.button import Button
+from functions import Centerize
+from object import Object
+class Menu(Object):
 
-class Menu:
+    def __init__(self) -> None:
 
-    def __init__(self):
+        super().__init__((0, 0))
 
         self.tab = None
         self.tabs = {}
         self.buttons = {}
-
+        
     def SetTab(self, name: str) -> None:
 
         self.tab = name
@@ -19,6 +22,9 @@ class Menu:
         self.buttons[name] = []
 
     def AddButton(self, tab, button) -> None:
+
+        Centerize(button.rect, self.rect, y=False)
+
         self.tabs[tab].add(button)
         self.buttons[tab].append(button)
     
