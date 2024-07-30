@@ -1,232 +1,83 @@
-from settings import *
+import pygame
 from object import Object
-from path import ImagePath
+from functions import isClicked, isMouseOver, Centerize
+from settings import White, Blue, Yellow, PASSIVE_BUTTON_COLOR
 from gui.text import Text
-from path import *
+from path import FontPath
 
 class Button(Object):
 
-	def __init__(self, position: tuple=("CENTER", "CENTER"), size: tuple=(0, 0), color: tuple = Blue, mouseOverColor: tuple = Red, imagePath: ImagePath=None, spriteGroups: list=[], parentRect: pygame.Rect=None, text: str="", textSize: int=20, textColor: tuple=White, textFontPath: pygame.font.Font=None, isActive=True, clickEvent=None):
+	def __init__(self, position: tuple = (0, 0), color= Blue, mouseOverColor: tuple = Yellow, image: pygame.Surface = None, spriteGroups: list = [], onClick = None, state = 'active', text: Text=None, mouseOverText: Text=None, passiveText: Text=None) -> None:
 
-		super().__init__(position, size, imagePath, spriteGroups, parentRect)
-		self._layer = GUI_LAYER
-		self.clickEvent = clickEvent
-		self.normalColor, self.mouseOverColor = color, mouseOverColor
-		self.color = self.normalColor
+		super().__init__(position, spriteGroups)
 
+		# Set the images of the button
+		self.SetImage(image)
+		self.mouseOverImage = self.image.copy()
+		self.passiveImage = self.image.copy()
+		
+		# Set the color of the button
+		self.SetColor(color)
+		self.SetMouseOverColor(mouseOverColor)
+		self.SetPassiveColor(PASSIVE_BUTTON_COLOR)
+
+		# Set the text of the button
+	
 		if text:
-
-			self.SetText(text, textSize, True, textColor, None, textFontPath)
-
-		if isActive:
-
-			self.Enable()
-
-		else:
 			
-			self.Disable()
-
-	def Enable(self):
-
-		self.active = True
-		self.Rerender()
-
-	def Disable(self):
-
-		self.active = False
-		self.color = Gray
-		self.Rerender()
-
-	def SetText(self, text: str, textSize: int, antialias: bool, color: tuple, backgroundColor, fontPath: pygame.font.Font = None) -> None:
-
-		self.text = Text(("CENTER", "CENTER"), text, textSize, antialias, color, backgroundColor, fontPath, (), self.screenRect)
-
-	def HandleEvents(self, event, mousePosition, keys):
-
-		super().HandleEvents(event, mousePosition, keys)
-
-		self.UpdateColor(mousePosition)
-		
-		self.Rerender()
-
-		if self.isMouseClick(event, mousePosition) and self.clickEvent:
+			Centerize(text, self)
+			text.Draw(self.image)
 			
-			self.clickEvent()
-
-	def UpdateColor(self, mousePosition):
-
-		if self.active:
-
-			self.color = self.mouseOverColor if self.isMouseOver(mousePosition) else self.normalColor
-		
-		else:
+		if mouseOverText:
 			
-			self.color = Gray
-
-	def Rerender(self):
-
-		super().Rerender()
+			Centerize(mouseOverText, self)
+			mouseOverText.Draw(self.mouseOverImage)
 		
-		self.image.fill(self.color)
-		pygame.draw.rect(self.image, Black, ((0, 0), self.rect.size), 2)
-
-		if hasattr(self, "text"):
+		if passiveText:
 			
-			self.text.Draw(self.image)
+			Centerize(passiveText, self)
+			passiveText.Draw(self.passiveImage)
 
-	def isMouseClick(self, event: pygame.event.Event, mousePosition: tuple) -> bool:
+		self.state = state
+		self.onClick = onClick
 
-		return super().isMouseClick(event, mousePosition) and self.active
+	def SetColor(self, color: tuple) -> None:
 
-class EllipseButton(Button):
+		self.image.fill(color)
 
-	def __init__(self, position: tuple = ("CENTER", "CENTER"), size: tuple = (0, 0), color: tuple = Blue, mouseOverColor: tuple = Red, imagePath: ImagePath = None, spriteGroups: list = [], parentRect: pygame.Rect = None, text: str = "", textSize: int = 20, textColor: tuple = White, textFontPath: pygame.font.Font = None, isActive=True, clickEvent=None):
+	def SetMouseOverColor(self, color: tuple) -> None:
+
+		self.mouseOverImage.fill(color)
+
+	def SetPassiveColor(self, color: tuple) -> None:
+
+		self.passiveImage.fill(color)
+
+	def HandleEvents(self, mouseDownPosition, mousePosition, event: pygame.event.Event) -> None:
 		
-		self.stayDown = False
-		super().__init__(position, size, color, mouseOverColor, imagePath, spriteGroups, parentRect, text, textSize, textColor, textFontPath, isActive, clickEvent)
+		if self.isMouseClick(mouseDownPosition, mousePosition, event):
 
-	def SetText(self, text: str, textSize: int, antialias: bool, color: tuple, backgroundColor, fontPath: pygame.font.Font = None) -> None:
+			print('clicked')
+			self.onClick()
+
+		if self.state != 'passive':
+
+			self.state = 'mouseOver' if isMouseOver(self, mousePosition) else 'active'
 		
-		super().SetText(text, textSize, antialias, color, backgroundColor, fontPath)
+	def isMouseClick(self, mouseDownPosition, mousePosition, event: pygame.event.Event) -> bool:
+
+		return isClicked(self, mouseDownPosition, mousePosition, event) and self.state != 'passive'
 	
-		self.textUpRect = pygame.Rect((self.text.rect.x, self.text.rect.y - 5), self.text.rect.size)
-		self.textDownRect = pygame.Rect((self.text.rect.x, self.text.rect.y + 5), self.text.rect.size)
-
-	def Rerender(self):
-
-		polygonUpRect = pygame.Rect(0, 0, self.rect.width, self.rect.height-5)
-		polygonDownRect = pygame.Rect(0, 5, self.rect.width, self.rect.height-5)
-
-		Object.Rerender(self)
-
-		pygame.draw.rect(self.image, Black, polygonDownRect, 0, 25)
-
-		if self.stayDown:
-
-			pygame.draw.rect(self.image, self.color, polygonDownRect, 0, 25)
-			pygame.draw.rect(self.image, Black, polygonDownRect, 1, 25)
-
-			if hasattr(self, "text"):
-
-				self.text.rect = self.textDownRect
-
-		else:
-
-			pygame.draw.rect(self.image, self.color, polygonUpRect, 0, 25)
-			pygame.draw.rect(self.image, Black, polygonUpRect, 2, 25)
-
-			if hasattr(self, "text"):
-
-				self.text.rect = self.textUpRect
-
-		if hasattr(self, "text"):
-			
-			self.text.Draw(self.image)
-
-	def UpdateColor(self, mousePosition):
-
-		if self.active:
-
-			self.color = self.mouseOverColor if self.isMouseOver(mousePosition) or self.stayDown else self.normalColor
-		
-		else:
-
-			self.color = Gray
-
-	def HandleEvents(self, event, mousePosition, keys):
-
-		Object.HandleEvents(self, event, mousePosition, keys)
-
-		if event.type == pygame.MOUSEBUTTONDOWN and self.isMouseOver(mousePosition):
-
-			self.stayDown = True
-
-		if event.type == pygame.MOUSEBUTTONUP:
-
-			self.stayDown = False
-
-		self.UpdateColor(mousePosition)
-
-		self.Rerender()
-
-		if self.isMouseClick(event, mousePosition) and self.clickEvent:
-			
-			self.clickEvent()
-
-class TriangleButton(Button):
-
-	def __init__(self, position: tuple = ("CENTER", "CENTER"), size: tuple = (0, 0), color: tuple = Blue, mouseOverColor: tuple = Red, imagePath: ImagePath = None, spriteGroups: list = [], parentRect: pygame.Rect = None, text: str = "", textSize: int = 20, textColor: tuple = White, textFontPath: pygame.font.Font = None, isActive=True, rotation="RIGHT"):
-		
-		self.stayDown, self.rotation = False, rotation
-		super().__init__(position, size, color, mouseOverColor, imagePath, spriteGroups, parentRect, text, textSize, textColor, textFontPath, isActive)
-
-	def SetText(self, text: str, textSize: int, antialias: bool, color: tuple, backgroundColor, fontPath: pygame.font.Font = None) -> None:
-		
-		super().SetText(text, textSize, antialias, color, backgroundColor, fontPath)
+	def Draw(self, surface: pygame.Surface) -> None:
 	
-		self.textUpRect = pygame.Rect((self.text.rect.x, self.text.rect.y - 5), self.text.rect.size)
-		self.textDownRect = pygame.Rect((self.text.rect.x, self.text.rect.y + 5), self.text.rect.size)
+		if self.state == 'active':
 
-	def Rerender(self):
+			super().Draw(surface)
 
-		if self.rotation == "RIGHT":
+		elif self.state == 'mouseOver':
 
-			polygonUpPoints = [(0, 0), (self.rect.width, self.rect.height/2-5), (0, self.rect.height-10)]
-			polygonDownPoints = [(0, 10), (self.rect.width, self.rect.height/2+5), (0, self.rect.height)]
-		
-		elif self.rotation == "LEFT":
+			surface.blit(self.mouseOverImage, self.rect)
 
-			polygonUpPoints = [(self.rect.width, 0), (0, self.rect.height/2-5), (self.rect.width, self.rect.height-10)]
-			polygonDownPoints = [(self.rect.width, 10), (0, self.rect.height/2+5), (self.rect.width, self.rect.height)]
+		elif self.state == 'passive':
 
-		Object.Rerender(self)
-
-		pygame.draw.polygon(self.image, Black, polygonDownPoints)
-		
-		if self.stayDown:
-
-			pygame.draw.polygon(self.image, self.color, polygonDownPoints)
-			pygame.draw.polygon(self.image, Black, polygonDownPoints, 1)
-
-			if hasattr(self, "text"):
-
-				self.text.rect = self.textDownRect
-
-		else:
-
-			pygame.draw.polygon(self.image, self.color, polygonUpPoints, 0)
-			pygame.draw.polygon(self.image, Black, polygonUpPoints, 2)
-
-			if hasattr(self, "text"):
-
-				self.text.rect = self.textUpRect
-
-		if hasattr(self, "text"):
-			
-			self.text.Draw(self.image)
-
-	def UpdateColor(self, mousePosition):
-		
-		if self.active:
-
-			self.color = self.mouseOverColor if self.isMouseOver(mousePosition) or self.stayDown else self.normalColor
-
-		else:
-			
-			self.color = Gray
-
-	def HandleEvents(self, event, mousePosition, keys):
-
-		Object.HandleEvents(self, event, mousePosition, keys)
-
-		if event.type == pygame.MOUSEBUTTONDOWN and self.isMouseOver(mousePosition):
-
-			self.stayDown = True
-
-		if event.type == pygame.MOUSEBUTTONUP:
-
-			self.stayDown = False
-
-		self.UpdateColor(mousePosition)
-
-		self.Rerender()
+			surface.blit(self.passiveImage, self.rect)
