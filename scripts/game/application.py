@@ -1,5 +1,5 @@
-from settings import *
 import sys, pygame
+from settings import WINDOW, FPS, DEBUG_MODE, DEBUG_MODE_COLOR
 from gui.text import Text
 
 class Application:
@@ -11,8 +11,8 @@ class Application:
 		self.InitClock()
 		self.InitMixer()
 		self.InitDebugLog()
-		self.SetTitle(WINDOW_TITLE)
-		self.SetSize(WINDOW_SIZE)
+		self.SetTitle(WINDOW.TITLE)
+		self.SetSize(WINDOW.SIZE)
 		self.SetFPS(FPS)
 		self.SetDebugMode(DEBUG_MODE)
 		self.InitWindow()
@@ -29,13 +29,10 @@ class Application:
 
 		self.debugMode = DEBUG_MODE
 		self.debugModeLog = []
-		self.AddDebugLog('Debug Mode: ON, Press F3 to toggle')
-		self.AddDebugLog(f'Python Version: {sys.version}')
-		self.AddDebugLog(f'Pygame Version: {pygame.version.ver}')
 
 	def AddDebugLog(self, text: str) -> None:
 
-		self.debugModeLog.append(Text((0, 0), text, 25, True, colors.get('red')))
+		self.debugModeLog.append(Text((0, 0), text, 25, True, DEBUG_MODE_COLOR))
 		self.debugModeLog[-1].rect.topleft = (0, 25 * len(self.debugModeLog) - 25)
 
 	def DebugLog(self, row: int, text: str) -> None:
@@ -94,22 +91,26 @@ class Application:
 
 			#-# Handling Events #-#
 			for event in pygame.event.get():
-				
-				if event.type == pygame.MOUSEBUTTONDOWN:
-
-					self.mouseDownPosition = self.mousePosition
 					
 				self.HandleEvents(event)
-
-				if event.type == pygame.MOUSEBUTTONUP:
-
-					self.mouseDownPosition = None
 
 			self.Update()
 
 			#-# Draw Objects #-#
 			self.Draw()
 	
+	def UpdateDebugLog(self, event) -> None:
+
+		self.DebugLog(0, 'Debug Mode: ON, Press F3 to toggle')
+		self.DebugLog(1, f'Python Version: {sys.version}')
+		self.DebugLog(2, f'Pygame Version: {pygame.version.ver}')
+		self.DebugLog(3, f'---------------------------------------')
+		self.DebugLog(4, f'FPS: {round(self.clock.get_fps())}')
+		self.DebugLog(5, f'Event Name: {pygame.event.event_name(event.type)}')
+		self.DebugLog(6, f'Event Position: {event.dict.get("pos")}')
+		self.DebugLog(7, f'Mouse Position: {self.mousePosition}')
+		self.DebugLog(8, f'---------------------------------------')
+
 	def HandleEvents(self, event: pygame.event.Event) -> None:
 		
 		keys = pygame.key.get_pressed()
@@ -118,8 +119,7 @@ class Application:
 
 			self.debugMode = not self.debugMode
 
-		self.DebugLog(3, f'FPS: {round(self.clock.get_fps())}')
-
+		self.UpdateDebugLog(event)
 		self.HandleExitEvents(event)
 
 	def HandleExitEvents(self, event: pygame.event.Event) -> None:

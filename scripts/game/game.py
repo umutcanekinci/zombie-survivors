@@ -1,96 +1,135 @@
+import pygame
 from game.application import Application
 from gui.menu import Menu
-from gui.text import Text
-from settings import *
-from gui.button import Button
-from functions import Centerize, isMouseButtonDown, isMouseButtonUp, isClicked
+from settings import TABS, BACKGROUND_COLOR
+from network import Network
 
-import pygame
 
 class Game(Application):
 
-    def __init__(self):
-        
-        super().__init__()
-        pygame.init()
-        self.InitGUI()
+	def __init__(self):
+		
+		super().__init__()
+		pygame.init()
+		self.InitGUI()
+		self.network = Network(self.OnRecieveData)
 
-    def InitGUI(self) -> None:
-        
-        self.menu = Menu()
-        self.menu.rect = self.rect
-        
-        self.menu.AddTab('main')
-        self.menu.AddTab('player')
-        self.menu.AddTab('upgrades')
-        self.menu.AddTab('achievments')
-        self.menu.AddTab('settings')
-        self.menu.AddTab('credits')
-        
-        self.menu.AddTab('mode')
-        self.menu.AddTab('connect')
-        self.menu.AddTab('lobby')
-        self.menu.AddTab('join')
-        self.menu.AddTab('game')
+	def InitGUI(self) -> None:
+		
+		self.menu = Menu(TABS)
+		self.menu.rect = self.rect
+		self.menu.SetTab('connect')
 
-        self.menu.SetTab('main')
-        
-        #-# Main Menu #-#
-        image = pygame.Surface((400, 80))
-        mouseOverImage = image.copy()
-        clickImage = image.copy()
-        passiveImage = image.copy()
-        passiveMouseOverImage = image.copy()
-        passiveClickImage = image.copy()
+		# Main Menu Buttons
+		self.menu.AddButtonAuto('main', 'New Game', lambda: self.menu.SetTab('player'))
+		self.menu.AddButtonAuto('main', 'Continue Game', self.ContinueGame, 'inactive')
+		self.menu.AddButtonAuto('main', 'Upgrades', lambda: self.menu.SetTab('upgrades'), False)
+		self.menu.AddButtonAuto('main', 'Achievements', lambda: self.menu.SetTab('achievements'), False)
+		self.menu.AddButtonAuto('main', 'Settings', lambda: self.menu.SetTab('settings'), False)
+		self.menu.AddButtonAuto('main', 'Credits', lambda: self.menu.SetTab('credits'), False)
+		self.menu.AddButtonAuto('main', 'Exit', self.Exit)
 
-        image.fill(colors.get('blue'))
-        mouseOverImage.fill(colors.get('red'))
-        clickImage.fill(colors.get('green'))
-        passiveImage.fill(colors.get('gray'))
-        passiveMouseOverImage.fill(colors.get('black'))
-        passiveClickImage.fill(colors.get('black'))
+		# Player Menu Buttons
+		self.menu.AddInputBoxAuto('player', 'Enter your name')
+		self.menu.AddButtonAuto('player', 'Confirm', lambda: self.menu.SetTab('mode'), False)
+		self.menu.AddButtonAuto('player', 'Back', lambda: self.menu.SetTab('main'))
 
-        text = Text((0, 0), 'New Game')
-        mouseOverText = Text((0, 0), 'New Game', color=colors.get('black'))
-        passiveText = Text((0, 0), '', color=colors.get('black'))
+		# Mode Menu Buttons
+		self.menu.AddButtonAuto('mode', 'Singleplayer', self.Singleplayer)
+		self.menu.AddButtonAuto('mode', 'Multiplayer', lambda: self.menu.SetTab('connect'))
+		self.menu.AddButtonAuto('mode', 'Back', lambda: self.menu.SetTab('player'))
 
-        button = Button((0, 150), lambda: self.menu.SetTab('player'))
-        button.SetImages(image, mouseOverImage, clickImage)
-        button.SetPassiveImages(passiveImage, passiveMouseOverImage, passiveClickImage)
+		# Connect Menu Buttons
+		self.menu.AddButtonAuto('connect', 'Join via IP', lambda: self.menu.SetTab('join'))
+		self.menu.AddButtonAuto('connect', 'Host & Play', self.Host)
+		self.menu.AddButtonAuto('connect', 'Back', lambda: self.menu.SetTab('mode'))
 
-        
-        button.SetText(text, mouseOverText, passiveText)
+		# Join Menu Buttons
+		self.menu.AddInputBoxAuto('join', 'Enter the IP')
+		self.menu.AddInputBoxAuto('join', 'Enter the Port')
+		self.menu.AddButtonAuto('join', 'Join', self.JoinLobby, False)
+		self.menu.AddButtonAuto('join', 'Back', lambda: self.menu.SetTab('connect'))
 
-        self.menu.AddButton('main', button)
+		# Lobby Menu Buttons
+		self.menu.AddButtonAuto('lobby', 'Start Game', lambda: self.menu.SetTab('game'), False)
+		self.menu.AddButtonAuto('lobby', 'Back', lambda: self.menu.SetTab('connect'))
 
-    def NewGame(self) -> None:
-        
-        pass
+		
+		pass
+	def Singleplayer(self) -> None:
+		
+		# Database should be added
+		pass
 
-    def ContinueGame(self) -> None:
-        
-        pass
+	def JoinLobby(self) -> None:
 
-    def HandleEvents(self, event: pygame.event.Event) -> None:
-        
-        self.menu.HandleEvents(self.mouseDownPosition, self.mousePosition, event)
-        super().HandleEvents(event)
+		if self.network.Connect(self.menu.buttons['join'][0].text, int(self.menu.buttons['join'][1].text)):
 
-        self.DebugLog(4, f'Event Name: {pygame.event.event_name(event.type)}')
-        self.DebugLog(5, f'Event Position: {event.dict.get("pos")}')
-        self.DebugLog(6, f'---------------------------------------')
-        self.DebugLog(7, f'Mouse Position: {self.mousePosition}')
-        self.DebugLog(8, f'Mouse Down Position: {self.mouseDownPosition}')
-    def Draw(self) -> None:
+			self.menu.SetTab('lobby')
 
-        self.window.fill(BACKGROUND_COLOR)
+		else:
 
-        if self.menu.tab == 'game':
+			self.menu.SetTab('connect')
 
-            self.window.fill((255, 255, 255))
+	def Host(self) -> None:
 
-        else:
+		self.network.Host()
 
-            self.menu.Draw(self.window)
+	def OnRecieveData(self, data) -> None:
 
-        super().Draw()
+		command, data = data
+
+		if command == '':
+
+			pass
+
+	def ContinueGame(self) -> None:
+		
+		# Database should be added
+		pass
+
+	
+
+
+
+
+
+
+
+
+	def UpdateDebugLog(self, event) -> None:
+		
+		self.DebugLog(9, f'Mouse Down Position: {self.mouseDownPosition}')
+		self.DebugLog(10, f'Network Status: {self.network.status}')
+
+		return super().UpdateDebugLog(event)
+
+	def HandleEvents(self, event: pygame.event.Event) -> None:
+		
+		# Activate confirm buttons when text is entered
+		if self.menu.tab == 'player':
+
+			self.menu.buttons[self.menu.tab][1].isEnabled = self.menu.buttons[self.menu.tab][0].text    
+		
+		elif self.menu.tab == 'join':
+
+			self.menu.buttons[self.menu.tab][2].isEnabled = self.menu.buttons[self.menu.tab][0].text and self.menu.buttons[self.menu.tab][1].text        
+
+		self.menu.HandleEvents(self.mousePosition, event)
+		super().HandleEvents(event)       
+
+	def HandleExitEvents(self, event: pygame.event.Event) -> None:
+		
+		if self.menu.HandleExitEvents(event): self.Exit()
+	
+	def Draw(self) -> None:
+
+		self.window.fill(BACKGROUND_COLOR)
+		self.menu.Draw(self.window)
+
+		super().Draw()
+
+	def Exit(self) -> None:
+
+		self.network.Close()
+		return super().Exit()

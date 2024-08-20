@@ -5,7 +5,8 @@ class Object(pygame.sprite.Sprite):
     def __init__(self, position: tuple = (0, 0), spriteGroups: list = []):
 
         super().__init__(spriteGroups)
-        self.rect = pygame.Rect(position, (0, 0))
+        self.rect = pygame.Rect(0, 0, 0, 0)
+        self.rect.center = position
 
     def SetImage(self, image: pygame.Surface) -> None:
         

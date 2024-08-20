@@ -1,121 +1,234 @@
 import pygame
 from object import Object
-from functions import isClicked, isMouseOver, Centerize
-from settings import colors, PASSIVE_BUTTON_COLOR
+from functions import isMouseOver, isHeld, Centerize, isMouseButtonUp
+from settings import colors, BUTTON
 from gui.text import Text
 from path import FontPath
 
 class Button(Object):
 
-	def __init__(self, position: tuple = (0, 0), onClick = None, state = 'active', spriteGroups: list = []) -> None:
+	def __init__(self, position: tuple = (0, 0), onClick = lambda: None, isEnabled=True, spriteGroups: list = []) -> None:
 
 		super().__init__(position, spriteGroups)
-
-		self.state = state
+		self.isEnabled = isEnabled
+		self.state = 'normal'
 		self.onClick = onClick
 
-	def SetText(self, text: Text=None, mouseOverText: Text=None, passiveText: Text=None):
+	def SetText(self, text: Text=None, mouseOverText: Text=None, heldText: Text=None):
 
-		if text and self.image:
+		if text and hasattr(self, 'image') and self.image:
 			
 			Centerize(text.rect, self.rect)
 			text.Draw(self.image)
 			
-		if mouseOverText and self.mouseOverImage:
+		if mouseOverText and hasattr(self, 'mouseOverImage') and self.mouseOverImage:
 			
 			Centerize(mouseOverText.rect, self.rect)
 			mouseOverText.Draw(self.mouseOverImage)
 		
-		if passiveText and self.passiveImage:
+		if heldText and hasattr(self, 'heldImage') and self.heldImage:
 			
-			Centerize(passiveText.rect, self.rect)
-			passiveText.Draw(self.passiveImage)
+			Centerize(heldText.rect, self.rect)
+			heldText.Draw(self.heldImage)
 
-	def SetImages(self, image: pygame.Surface = None, mouseOverImage: pygame.Surface= None, clickImage: pygame.Surface = None):
+		self.SetInactiveText(text, mouseOverText, heldText)
+
+	def SetInactiveText(self, text: Text=None, mouseOverText: Text=None, inactiveText: Text=None):
+
+		if text and hasattr(self, 'inactiveImage') and self.inactiveImage:
+			
+			Centerize(text.rect, self.rect)
+			text.Draw(self.inactiveImage)
+			
+		if mouseOverText and hasattr(self, 'inactiveMouseOverImage') and self.inactiveMouseOverImage:
+			
+			Centerize(mouseOverText.rect, self.rect)
+			mouseOverText.Draw(self.inactiveMouseOverImage)
+		
+		if inactiveText and hasattr(self, 'inactiveHeldImage') and self.inactiveHeldImage:
+			
+			Centerize(inactiveText.rect, self.rect)
+			inactiveText.Draw(self.inactiveHeldImage)
+
+	def SetImages(self, image: pygame.Surface = None, mouseOverImage: pygame.Surface= None, heldImage: pygame.Surface = None):
 
 		self.image = image
-		self.mouseOverImage = mouseOverImage
-		self.clickImage = clickImage
+		self.mouseOverImage = mouseOverImage if mouseOverImage else image
+		self.heldImage = heldImage if heldImage else image
 
 		self.rect = self.image.get_rect(center=self.rect.center)
 
-	def SetPassiveImages(self, image: pygame.Surface = None, mouseOverImage: pygame.Surface= None, clickImage: pygame.Surface = None):
+	def SetInactiveImages(self, image: pygame.Surface = None, mouseOverImage: pygame.Surface= None, heldImage: pygame.Surface = None):
 
-		self.passiveImage = image
-		self.passiveMouseOverImage = mouseOverImage
-		self.passiveClickImage = clickImage
+		self.inactiveImage = image
+		self.inactiveMouseOverImage = mouseOverImage if mouseOverImage else image
+		self.inactiveHeldImage = heldImage if heldImage else image
 
-		self.rect = self.passiveImage.get_rect(center=self.rect.center)
+		self.rect = self.inactiveImage.get_rect(center=self.rect.center)
 
-	def HandleEvents(self, mouseDownPosition, mousePosition, event: pygame.event.Event) -> None:
+	def HandleEvents(self, mousePosition, event: pygame.event.Event) -> None:
 		
-		if self.isClicked(mouseDownPosition, mousePosition, event): self.onClick()
+		if self.state == 'held':
+		
+			if self.isEnabled:
+					
+				if event.type == pygame.MOUSEBUTTONUP:
 
-		#image
-		#mouseOverImage
-		#clickImage
-		#passiveImage
-		#passiveMouseOverImage
-		#passiveClickImage
+					if isMouseOver(self.rect, mousePosition):
 
-		if 'passive' in self.state:
+						self.state = 'mouseOver'
+						self.onClick()
 
-			if isMouseOver(self.rect, mousePosition): self.state = 'passiveMouseOver'
+					else:
 
-			elif isClicked(self.rect, mouseDownPosition, mousePosition, event): self.state = 'passiveClick'
+						self.state = 'normal'
 
-			else: self.state = 'passive'
+				self.state == 'inactiveHeld'
+	
+			else:
+
+				if event.type == pygame.MOUSEBUTTONUP:
+
+					self.state = 'mouseOver' if isMouseOver(self.rect, mousePosition) else 'normal'
 
 		else:
 
-			if isMouseOver(self.rect, mousePosition): self.state = 'mouseOver'
+			if isHeld(self.rect, mousePosition, event): self.state = 'held'
+			elif isMouseOver(self.rect, mousePosition): self.state = 'mouseOver'
+			else: self.state = 'normal'
 
-			elif isClicked(self.rect, mouseDownPosition, mousePosition, event): self.state = 'click'
-
-			else: self.state = 'active'
-
-	def isClicked(self, mouseDownPosition, mousePosition, event: pygame.event.Event) -> bool:
+	def isClicked(self, mousePosition, event: pygame.event.Event) -> bool:
 			
-		return isClicked(self.rect, mouseDownPosition, mousePosition, event) and 'passive' not in self.state
+		return isMouseButtonUp(self.rect, mousePosition, event) and self.state=='held'
 	
 	def Draw(self, surface: pygame.Surface) -> None:
 	
-		if self.state == 'active':
+		if self.state == 'normal':
 
-			super().Draw(surface)
+			super().Draw(surface) if self.isEnabled else surface.blit(self.inactiveImage, self.rect)
 
 		elif self.state == 'mouseOver':
 
-			surface.blit(self.mouseOverImage, self.rect)
+			surface.blit(self.mouseOverImage, self.rect) if self.isEnabled else surface.blit(self.inactiveMouseOverImage, self.rect)
 
-		elif self.state == 'click':
+		elif self.state == 'held':
 
-			surface.blit(self.clickImage, self.rect)
+			surface.blit(self.heldImage, self.rect) if self.isEnabled else surface.blit(self.inactiveHeldImage, self.rect)
 
-		elif self.state == 'passive':
+class ColorButton(Button):
 
-			surface.blit(self.passiveImage, self.rect)
+	def __init__(self, position: tuple = (0, 0), onClick=lambda: None, state='active', spriteGroups: list = [], size: tuple=BUTTON.SIZE, color: tuple=BUTTON.COLOR, mouseOverColor: tuple=BUTTON.MOUSE_OVER_COLOR, heldColor: tuple=BUTTON.HELD_COLOR) -> None:
+	
+		super().__init__(position, onClick, state, spriteGroups)
 
-		elif self.state == 'passiveMouseOver':
+		self.SetImages(pygame.Surface(size), pygame.Surface(size), pygame.Surface(size))
+		self.SetInactiveImages()
 
-			surface.blit(self.passiveMouseOverImage, self.rect)
+		self.image.fill(color)
+		self.mouseOverImage.fill(mouseOverColor)
+		self.heldImage.fill(heldColor)
 
-		elif self.state == 'passiveClick':
+	def SetInactiveImages(self, color: tuple=BUTTON.INACTIVE_COLOR, mouseOverColor: tuple=BUTTON.INACTIVE_MOUSE_OVER_COLOR, heldColor: tuple=BUTTON.INACTIVE_HELD_COLOR) -> None:
 
-			surface.blit(self.passiveClickImage, self.rect)
+		super().SetInactiveImages(pygame.Surface(self.rect.size), pygame.Surface(self.rect.size), pygame.Surface(self.rect.size))
+
+		self.inactiveImage.fill(color)
+		self.inactiveMouseOverImage.fill(mouseOverColor)
+		self.inactiveHeldImage.fill(heldColor)
+
+	def SetText(self, text: Text = None, fontSize: int = BUTTON.TEXT_SIZE, antialias: bool = True, color: tuple = BUTTON.TEXT_COLOR, mouseOverColor: tuple=BUTTON.TEXT_MOUSE_OVER_COLOR, heldColor: tuple=BUTTON.TEXT_HELD_COLOR) -> None:
+		
+		super().SetText(
+						Text((0, 0), text, fontSize, antialias, color),
+						Text((0, 0), text, fontSize, antialias, mouseOverColor),
+						Text((0, 0), text, fontSize, antialias, heldColor))
+
+		self.SetInactiveText(text)
+
+	def SetInactiveText(self, text: Text = None, fontSize: int = BUTTON.TEXT_SIZE, antialias: bool = True, color: tuple = BUTTON.TEXT_INACTIVE_COLOR, mouseOverColor: tuple=BUTTON.TEXT_INACTIVE_MOUSE_OVER_COLOR, heldColor: tuple=BUTTON.TEXT_INACTIVE_HELD_COLOR) -> None:
+		
+		return super().SetInactiveText(
+						Text((0, 0), text, fontSize, antialias, color),
+						Text((0, 0), text, fontSize, antialias, mouseOverColor),
+						Text((0, 0), text, fontSize, antialias, heldColor))
 
 class EllipseButton(Button):
 
-	def __init__(self, position: tuple = (0, 0), color=colors.get('blue'), mouseOverColor: tuple = colors.get('yellow'), image: pygame.Surface = None, spriteGroups: list = [], onClick=None, state='active', text: Text = None, mouseOverText: Text = None, passiveText: Text = None) -> None:
+	def __init__(self, position: tuple = (0, 0), onClick=lambda: None, state='active', spriteGroups: list = [], size: tuple=BUTTON.SIZE, color: tuple=BUTTON.COLOR, mouseOverColor: tuple=BUTTON.MOUSE_OVER_COLOR, heldColor: tuple=BUTTON.HELD_COLOR, heldSpace=BUTTON.HELD_SPACE, radius=BUTTON.RADIUS) -> None:
+	
+		super().__init__(position, onClick, state, spriteGroups)
+		self.heldSpace = heldSpace
+		self.radius = radius
+
+		self.SetImages(pygame.Surface(size, pygame.SRCALPHA), pygame.Surface(size, pygame.SRCALPHA), pygame.Surface(size, pygame.SRCALPHA))
+		self.SetInactiveImages()
+
+		self.backgroundRect = pygame.Rect(0, 0, self.rect.width, self.rect.height)
+		self.normalRect = pygame.Rect(0, 0, self.rect.width, self.rect.height - self.heldSpace)
+		self.heldRect = pygame.Rect(0, self.heldSpace, self.rect.width, self.rect.height - self.heldSpace)
 		
-		super().__init__(position, color, mouseOverColor, image, spriteGroups, onClick, state, text, mouseOverText, passiveText)
+		pygame.draw.rect(self.image, colors.get('black'), self.backgroundRect, 0, self.radius)
+		pygame.draw.rect(self.mouseOverImage, colors.get('black'), self.backgroundRect, 0, self.radius)
+		
+		pygame.draw.rect(self.image, color, self.normalRect, 0, self.radius)
+		pygame.draw.rect(self.image, colors.get('black'), self.backgroundRect, 2, self.radius)
+		
+		pygame.draw.rect(self.mouseOverImage, mouseOverColor, self.normalRect, 0, self.radius)
+		pygame.draw.rect(self.mouseOverImage, colors.get('black'), self.backgroundRect, 1, self.radius)
 
-		backgroundImage = self.image.copy()
+		pygame.draw.rect(self.heldImage, heldColor, self.heldRect, 0, self.radius)
+		pygame.draw.rect(self.heldImage, colors.get('black'), self.heldRect, 1, self.radius)
 
-		self.image
-		self.mouseOverImage
-		self.passiveImage
+	def SetInactiveImages(self, color=BUTTON.INACTIVE_COLOR, mouseOverColor=BUTTON.INACTIVE_MOUSE_OVER_COLOR, heldColor=BUTTON.INACTIVE_HELD_COLOR) -> None:
 
-		self.clickedImage = self.image.copy()
-		self.clickedMouseOverImage = self.mouseOverImage.copy()
-		self.clickedPassiveImage = self.passiveImage.copy()
+		super().SetInactiveImages(pygame.Surface(self.rect.size, pygame.SRCALPHA), pygame.Surface(self.rect.size, pygame.SRCALPHA), pygame.Surface(self.rect.size, pygame.SRCALPHA))
+	
+		self.backgroundRect = pygame.Rect(0, 0, self.rect.width, self.rect.height)
+		self.normalRect = pygame.Rect(0, 0, self.rect.width, self.rect.height - self.heldSpace)
+		self.heldRect = pygame.Rect(0, self.heldSpace, self.rect.width, self.rect.height - self.heldSpace)
+		
+		pygame.draw.rect(self.inactiveImage, colors.get('black'), self.backgroundRect, 0, self.radius)
+		pygame.draw.rect(self.inactiveMouseOverImage, colors.get('black'), self.backgroundRect, 0, self.radius)
+		
+		pygame.draw.rect(self.inactiveImage, color, self.normalRect, 0, self.radius)
+		pygame.draw.rect(self.inactiveImage, colors.get('black'), self.backgroundRect, 2, self.radius)
+		
+		pygame.draw.rect(self.inactiveMouseOverImage, mouseOverColor, self.normalRect, 0, self.radius)
+		pygame.draw.rect(self.inactiveMouseOverImage, colors.get('black'), self.backgroundRect, 1, self.radius)
+
+		pygame.draw.rect(self.inactiveHeldImage, heldColor, self.heldRect, 0, self.radius)
+		pygame.draw.rect(self.inactiveHeldImage, colors.get('black'), self.heldRect, 1, self.radius)
+
+	def SetText(self, text: Text = None, fontSize: int = BUTTON.TEXT_SIZE, antialias: bool = True, color: tuple = BUTTON.TEXT_COLOR, mouseOverColor: tuple=BUTTON.TEXT_MOUSE_OVER_COLOR, heldColor: tuple=BUTTON.TEXT_HELD_COLOR) -> None:
+		
+		normalText = Text((0, 0), text, fontSize, antialias, color)
+		mouseOverText = Text((0, 0), text, fontSize, antialias, mouseOverColor)
+		heldText = Text((0, 0), text, fontSize, antialias, heldColor)
+
+		Centerize(normalText.rect, self.normalRect)
+		normalText.Draw(self.image)
+			
+		Centerize(mouseOverText.rect, self.normalRect)
+		mouseOverText.Draw(self.mouseOverImage)
+		
+		Centerize(heldText.rect, self.normalRect)
+		heldText.rect.top += self.heldSpace
+		heldText.Draw(self.heldImage)
+
+		self.SetInactiveText(text)
+
+	def SetInactiveText(self, text: Text = None, fontSize: int = BUTTON.TEXT_SIZE, antialias: bool = True, color: tuple = BUTTON.TEXT_INACTIVE_COLOR, mouseOverColor: tuple=BUTTON.TEXT_INACTIVE_MOUSE_OVER_COLOR, heldColor: tuple=BUTTON.TEXT_INACTIVE_HELD_COLOR) -> None:
+		
+		normalText = Text((0, 0), text, fontSize, antialias, color)
+		mouseOverText = Text((0, 0), text, fontSize, antialias, mouseOverColor)
+		heldText = Text((0, 0), text, fontSize, antialias, heldColor)
+
+		Centerize(normalText.rect, self.normalRect)
+		normalText.Draw(self.inactiveImage)
+			
+		Centerize(mouseOverText.rect, self.normalRect)
+		mouseOverText.Draw(self.inactiveMouseOverImage)
+		
+		Centerize(heldText.rect, self.normalRect)
+		heldText.rect.top += self.heldSpace
+		heldText.Draw(self.inactiveHeldImage)
